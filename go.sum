@@ -1,0 +1,4 @@
+github.com/Andrew-M-C/go.uptime v0.0.0-20191114001235-dfef9077d71d h1:113YVeadHCHba6Fv3QqoxHM42pKiGyhetZzxA8m+NKQ=
+github.com/Andrew-M-C/go.uptime v0.0.0-20191114001235-dfef9077d71d/go.mod h1:0qYa1oNlYPBwcYKoPcZ/371+lRUqC+6b62qIrOJq5sw=
+github.com/patrickmn/go-cache v2.1.0+incompatible h1:HRMgzkcYKYpi3C8ajMPV8OFXaaRUnok+kx1WdO15EQc=
+github.com/patrickmn/go-cache v2.1.0+incompatible/go.mod h1:3Qf8kWWT7OJRJbdiICTKqZju1ZixQ/KpMGzzAfe6+WQ=
