@@ -4,7 +4,6 @@ import (
 	"path/filepath"
 	"runtime"
 	"strings"
-	"sync"
 	"testing"
 	"time"
 )
@@ -33,19 +32,6 @@ func getCallerInfo(invokeLevel int) (fileName string, line int, funcName string)
 }
 
 func TestBasicFunctional(t *testing.T) {
-	wg := sync.WaitGroup{}
-	wg.Add(1)
-	go test(t, &wg)
-	wg.Wait()
-
-	runtime.GC()
-	time.Sleep(8 * time.Second)
-	runtime.GC()
-	time.Sleep(2 * time.Second)
-}
-
-func test(t *testing.T, wg *sync.WaitGroup) {
-	defer wg.Done()
 	p := t.Logf
 	e := t.Errorf
 	var v interface{}
@@ -54,30 +40,63 @@ func test(t *testing.T, wg *sync.WaitGroup) {
 	shouldExist := func() {
 		_, li, fu := getCallerInfo(1)
 		if false == exist {
-			e("%v, %d, %s() - should exist but not", time.Now(), li, fu)
+			e("%v, Line %d, %s() - should exist but not", time.Now(), li, fu)
 			return
 		}
-		p("%v, %d, %s() - check existance OK, value: %v", time.Now(), li, fu, v)
+		p("%v, Line %d, %s() - check existance OK, value: %v", time.Now(), li, fu, v)
 	}
 
 	shouldNotExist := func() {
 		_, li, fu := getCallerInfo(1)
 		if exist {
-			e("%v, %d, %s() - should not exist but does", time.Now(), li, fu)
+			e("%v, Line %d, %s() - should not exist but does", time.Now(), li, fu)
 			return
 		}
-		p("%v, %d, %s() - check existance OK", time.Now(), li, fu)
+		p("%v, Line %d, %s() - check existance OK", time.Now(), li, fu)
 	}
 
+	_, li, fu := getCallerInfo(0)
+	p("%v, Line %d, %s() - test starts", time.Now(), li+1, fu)
+
 	// create expiremap
-	m := New(5*time.Second, time.Second)
+	exp := 5 * time.Second
+	m := New(exp)
+
+	if m.Expiration() != exp {
+		e("expiration not equal: %v", m.Expiration())
+		m = nil
+		time.Sleep(time.Second)
+		runtime.GC()
+		return
+	}
 
 	m.Store("1", time.Now())
 	time.Sleep(time.Second)
 	v, exist = m.Load("1")
 	shouldExist()
 
-	time.Sleep(4 * time.Second)
+	// extend it
+	time.Sleep(time.Second)
+	m.Store("1", time.Now())
+	time.Sleep(exp - time.Second)
+	v, exist = m.Load("1")
+	shouldExist()
+
+	time.Sleep(2 * time.Second)
 	v, exist = m.Load("1")
 	shouldNotExist()
+
+	m = nil
+	runtime.GC()
+	time.Sleep(time.Second)
+}
+
+func TestInvalidExpiration(t *testing.T) {
+	e := t.Errorf
+	if m := New(0); m.Expiration() <= 0 {
+		e("invalid expiration: %v", m.Expiration())
+		return
+	}
+	runtime.GC()
+	return
 }
